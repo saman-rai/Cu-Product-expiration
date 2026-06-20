@@ -192,6 +192,25 @@ body {
   min-height: 100vh;
 }
 
+/* Prevent flickering on page transitions */
+.page {
+  animation: pageFadeIn 0.12s ease;
+  min-height: calc(100vh - 3rem);
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem;
+  min-height: 200px;
+}
+
 /* --- Mobile Responsive --- */
 @media (max-width: 768px) {
   .sidebar {
@@ -668,6 +687,7 @@ textarea.form-input {
   justify-content: center;
   align-items: center;
   padding: 3rem;
+  min-height: 200px;
 }
 
 .loading-screen {
