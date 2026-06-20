@@ -14,8 +14,6 @@ async function request(url, options = {}) {
   const res = await fetch(`${BASE}${url}`, config);
 
   if (res.status === 401) {
-    // Session expired — redirect to login
-    window.location.href = '/login';
     throw new Error('로그인이 필요합니다.');
   }
 

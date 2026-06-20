@@ -45,6 +45,7 @@ export default function Login() {
               placeholder="사용자명 입력"
               autoFocus
               required
+              className="form-input"
             />
           </div>
           <div className="form-group">
@@ -56,6 +57,7 @@ export default function Login() {
               onChange={e => setPassword(e.target.value)}
               placeholder="비밀번호 입력"
               required
+              className="form-input"
             />
           </div>
           <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
