@@ -53,8 +53,22 @@ async function start() {
     });
   }
 
-  app.listen(PORT, () => {
-    console.log(`🚀 CU Product Expiry Server running on http://localhost:${PORT}`);
+  app.listen(PORT, '0.0.0.0', () => {
+    const { networkInterfaces } = require('os');
+    const nets = networkInterfaces();
+    let ip = 'localhost';
+    for (const name of Object.keys(nets)) {
+      for (const net of nets[name]) {
+        if (net.family === 'IPv4' && !net.internal) {
+          ip = net.address;
+          break;
+        }
+      }
+      if (ip !== 'localhost') break;
+    }
+    console.log(`🚀 CU Product Expiry Server running on:
+   Local:    http://localhost:${PORT}
+   Network:  http://${ip}:${PORT}`);
   });
 }
 

@@ -2,14 +2,15 @@
   "name": "cu-product-expiry",
   "version": "1.0.0",
   "private": true,
-  "description": "CU 편의점 유통기한 관리 시스템",
+  "description": "CU Convenience Store Product Expiry Management System",
   "scripts": {
     "dev": "concurrently -n server,client -c blue,green \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "cd server && node --watch index.js",
     "dev:client": "cd client && npx vite",
     "build": "cd client && npx vite build",
     "seed": "cd server && node seed.js",
-    "start": "cd server && node index.js"
+    "start": "cd server && node index.js",
+    "prod": "npm run build && NODE_ENV=production npm run start"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

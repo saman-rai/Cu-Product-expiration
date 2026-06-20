@@ -1,135 +1,150 @@
-# CU 편의점 유통기한 관리 시스템 🏪
+# 🏪 CU Convenience Store — Product Expiry Management System
 
-CU 편의점 재고의 **유통기한을 추적하고 알림**하는 웹 애플리케이션입니다.  
-바코드 스캔, 카테고리/서브카테고리 관리, 엑셀 가져오기/내보내기를 지원합니다.
-
----
-
-## ✨ 주요 기능
-
-| 기능 | 설명 |
-|------|------|
-| **제품 관리** | 바코드, 제품명, 유통기한, 진열장 위치, 수량, 가격 등 전체 CRUD |
-| **바코드 스캔** | 카메라 스캔 + USB 스캐너 지원 → 기존 제품 자동 조회 |
-| **빠른 스캔** | `/scan` 페이지에서 카메라 즉시 실행 → 유통기한 빠르게 업데이트 |
-| **유통기한 알림** | 로그인 시 오늘/내일/초과 제품 팝업 알림 |
-| **소멸 임박 페이지** | 탭별 조회: 초과/오늘/내일/이번주/다음주 |
-| **카테고리 트리** | 상위/하위 카테고리 계층 구조 |
-| **공급업체 관리** | 공급업체 CRUD |
-| **엑셀 가져오기** | 템플릿 다운로드 → 엑셀 작성 → 업로드 (대량 등록) |
-| **엑셀 내보내기** | 전체 제품을 `.xlsx` 파일로 다운로드 |
-| **대시보드** | 유통기한 상태별 요약 카드 + 임박 제품 테이블 |
-| **모바일 최적화** | 하단 네비게이션, FAB, 반응형 디자인 |
-| **PWA 지원** | "홈 화면에 추가" → 앱처럼 사용 가능 |
+Track expiration dates of thousands of products, scan barcodes, get alerts for expiring items, and export data to Excel. Built for Korean CU convenience stores.
 
 ---
 
-## 🚀 시작하기
+## ✨ Features
 
-### 1. 설치
+| Feature | Description |
+|---------|-------------|
+| **Product Management** | Full CRUD — barcode, name, expiry date, shelf location, quantity, prices, etc. |
+| **Barcode Scanning** | Camera scan (phone) + USB scanner support with auto-lookup |
+| **Quick Scan** | `/scan` page opens camera immediately → scan barcode → update expiry in 2 taps |
+| **Expiry Alerts** | Popup on login showing products expiring today / tomorrow / already expired |
+| **Expiring Soon Page** | Tabbed view: expired / today / tomorrow / this week / next week |
+| **Category Tree** | Hierarchical parent/child categories |
+| **Supplier Management** | Supplier CRUD with contact info |
+| **Excel Import** | Download template → fill in Excel → bulk upload (upserts by barcode) |
+| **Excel Export** | Download all products as `.xlsx` |
+| **Dashboard** | Summary cards (expired/critical/warning/ok) + nearest expiring products table |
+| **Mobile Optimized** | Bottom navigation, floating action button, responsive design, PWA support |
+| **PWA** | "Add to Home Screen" support, service worker, app icons |
+
+---
+
+## 🚀 Quick Start
 
 ```bash
-# 서버 의존성
+# Install dependencies
 cd server && npm install
-
-# 클라이언트 의존성
 cd ../client && npm install
-
-# 루트 의존성 (concurrently)
 cd .. && npm install
-```
 
-### 2. 환경 변수
-
-`.env` 파일 (루트 디렉토리):
-```
-SESSION_SECRET=your-secret-key
-PORT=3001
-```
-
-### 3. 시드 데이터 & 실행
-
-```bash
-# 관리자 계정 + 샘플 데이터 생성
+# Seed database (creates admin user + sample data)
 npm run seed
 
-# 개발 서버 실행 (서버 3001 + 클라이언트 5173)
+# Run in development mode
 npm run dev
 ```
 
-**기본 로그인:** `admin` / `admin123`
+**Default login:** `admin` / `admin123`
 
 ---
 
-## 🔧 기술 스택
+## 📱 Access from Your Phone
 
-| 계층 | 기술 |
-|------|------|
-| **프론트엔드** | React 19, React Router 7, Vite 6 |
-| **백엔드** | Express 4, sql.js (SQLite WASM) |
-| **인증** | 세션 기반 (express-session + file-store) |
-| **엑셀** | sheetjs (xlsx) |
-| **바코드** | html5-qrcode (카메라), USB 키보드 웨지 |
+### Development mode (hot reload)
+```bash
+npm run dev
+```
+Then open `http://<YOUR-COMPUTER-IP>:5173` on your phone (same Wi-Fi network).
+
+### Production mode (faster, standalone)
+```bash
+npm run prod
+```
+Then open `http://<YOUR-COMPUTER-IP>:3001` on your phone.
+
+Find your IP with `ipconfig` (Windows) or `ifconfig` (Mac/Linux).
 
 ---
 
-## 📁 프로젝트 구조
+## 🏗️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React 19, React Router 7, Vite 6 |
+| **Backend** | Express 4, sql.js (SQLite via WebAssembly) |
+| **Auth** | Session-based (express-session + file-store) |
+| **Excel** | SheetJS (xlsx) |
+| **Barcode** | html5-qrcode (camera), USB keyboard wedge |
+
+---
+
+## 📁 Project Structure
 
 ```
 CuProductExpiry/
-├── client/                    # React 프론트엔드
+├── client/                    # React frontend
 │   ├── src/
-│   │   ├── components/        # 공통 컴포넌트
-│   │   ├── pages/             # 페이지 컴포넌트
-│   │   ├── services/          # API 클라이언트
-│   │   ├── context/           # 인증 컨텍스트
+│   │   ├── components/        # Shared components (Layout, BottomNav, etc.)
+│   │   ├── pages/             # Page components (Dashboard, Products, etc.)
+│   │   ├── services/          # API client
+│   │   ├── context/           # Auth context
 │   │   └── styles/            # CSS
-│   ├── public/                # 정적 파일 (PWA)
+│   ├── public/                # Static files (PWA manifest, icons, service worker)
 │   └── index.html
-├── server/                    # Express 백엔드
-│   ├── routes/                # API 라우트
-│   ├── middleware/            # 인증 미들웨어
-│   ├── db.js                  # SQLite 데이터베이스
-│   ├── seed.js                # 시드 데이터
-│   └── index.js               # 서버 진입점
-├── package.json               # 루트 스크립트
-└── .env                       # 환경 변수
+├── server/                    # Express backend
+│   ├── routes/                # API route handlers
+│   ├── middleware/            # Auth middleware
+│   ├── db.js                  # SQLite database abstraction
+│   ├── seed.js                # Seed data script
+│   └── index.js               # Server entry point
+├── package.json               # Root scripts
+├── .env                       # Environment variables
+├── README.md
+└── PROJECT.md                 # Comprehensive project doc for AI agents
 ```
 
 ---
 
-## 📡 API 엔드포인트
+## 📡 API Endpoints
 
-| Method | Path | 설명 |
-|--------|------|------|
-| `POST` | `/api/auth/login` | 로그인 |
-| `GET` | `/api/auth/me` | 현재 사용자 정보 |
-| `GET` | `/api/products` | 제품 목록 (검색/필터) |
-| `GET` | `/api/products/expiring` | 기간별 소멸 제품 |
-| `GET` | `/api/products/barcode/:code` | 바코드 조회 |
-| `POST` | `/api/products` | 제품 추가 |
-| `PUT` | `/api/products/:id` | 제품 수정 |
-| `DELETE` | `/api/products/:id` | 제품 삭제 (소프트) |
-| `GET` | `/api/categories/tree` | 카테고리 트리 |
-| `GET` | `/api/dashboard/summary` | 대시보드 요약 |
-| `GET` | `/api/dashboard/expiry-alerts` | 유통기한 알림 |
-| `GET` | `/api/excel/export` | 엑셀 내보내기 |
-| `POST` | `/api/excel/import` | 엑셀 가져오기 |
-
----
-
-## 📊 유통기한 상태 기준
-
-| 상태 | 기준 | 색상 |
-|------|------|------|
-| 🔴 유통기한 초과 | `expired` | `#dc3545` |
-| 🟠 임박 | 0~3일 이내 | `#fd7e14` |
-| 🟡 주의 | 4~14일 이내 | `#ffc107` |
-| 🟢 여유 | 15~60일 이내 | `#28a745` |
-| 🔵 신규 | 60일 초과 | `#17a2b8` |
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/auth/login` | Login |
+| `GET` | `/api/auth/me` | Current user info |
+| `GET` | `/api/products` | List products (search/filter) |
+| `GET` | `/api/products/expiring` | Products grouped by timeframe |
+| `GET` | `/api/products/barcode/:code` | Lookup by barcode |
+| `POST` | `/api/products` | Create product |
+| `PUT` | `/api/products/:id` | Update product |
+| `DELETE` | `/api/products/:id` | Soft delete |
+| `GET` | `/api/categories/tree` | Category hierarchy tree |
+| `GET` | `/api/dashboard/summary` | Dashboard summary |
+| `GET` | `/api/dashboard/expiry-alerts` | Expiry alert data |
+| `GET` | `/api/excel/export` | Export all products to Excel |
+| `POST` | `/api/excel/import` | Import products from Excel |
 
 ---
 
-## 📄 라이선스
+## ⏰ Expiry Status Levels
+
+| Status | Condition | Color |
+|--------|-----------|-------|
+| Expired | Past expiry date | `#dc3545` |
+| Critical | 0–3 days remaining | `#fd7e14` |
+| Warning | 4–14 days remaining | `#ffc107` |
+| Normal | 15–60 days remaining | `#28a745` |
+| Fresh | 60+ days remaining | `#17a2b8` |
+
+---
+
+## 🧪 Scripts Reference
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start both server + client in dev mode |
+| `npm run dev:server` | Start backend only (port 3001) |
+| `npm run dev:client` | Start frontend only (port 5173) |
+| `npm run build` | Build frontend for production |
+| `npm run seed` | Seed database with sample data |
+| `npm run start` | Start server in current mode |
+| `npm run prod` | Build + start in production mode |
+
+---
+
+## 📄 License
 
 MIT
