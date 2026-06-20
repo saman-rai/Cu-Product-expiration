@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function QuickScan() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [scannerReady, setScannerReady] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [barcode, setBarcode] = useState('');
@@ -22,7 +24,6 @@ export default function QuickScan() {
     api.getCategories().then(setCategories).catch(() => {});
   }, []);
 
-  // Start camera automatically on mount
   useEffect(() => {
     startScanner();
     return () => { stopScanner(); };
@@ -43,15 +44,13 @@ export default function QuickScan() {
       await reader.start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 150 } },
-        (decodedText) => {
-          handleScan(decodedText);
-        },
+        (decodedText) => { handleScan(decodedText); },
         () => {}
       );
       setScannerReady(true);
     } catch (err) {
       console.error('Camera error:', err);
-      setError('카메라를 열 수 없습니다. 하단에서 바코드를 직접 입력하세요.');
+      setError(t('scan.cameraError'));
       setScanning(false);
     }
   };
@@ -68,7 +67,6 @@ export default function QuickScan() {
 
   const handleScan = async (code) => {
     setBarcode(code);
-    // Try to find existing product
     try {
       const existing = await api.getProductByBarcode(code);
       setProduct(existing);
@@ -81,7 +79,6 @@ export default function QuickScan() {
       });
       setError('');
     } catch {
-      // New product
       setProduct(null);
       setIsNew(true);
       setForm({ name: '', expiry_date: '', quantity: 1, category_id: '' });
@@ -95,45 +92,30 @@ export default function QuickScan() {
   }, [barcode]);
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleManualBarcode();
-    }
+    if (e.key === 'Enter') { e.preventDefault(); handleManualBarcode(); }
   };
 
   const handleUpdateExpiry = async () => {
-    if (!form.expiry_date) return setError('유통기한을 선택하세요.');
+    if (!form.expiry_date) return setError(t('scan.error_expiry'));
     setSaving(true);
     try {
       await api.updateProduct(product.id, { ...product, expiry_date: form.expiry_date });
       setStats(prev => ({ ...prev, updated: prev.updated + 1 }));
       resetScan();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setSaving(false); }
   };
 
   const handleAddProduct = async () => {
-    if (!form.name) return setError('제품명을 입력하세요.');
-    if (!form.expiry_date) return setError('유통기한을 선택하세요.');
+    if (!form.name) return setError(t('scan.error_name'));
+    if (!form.expiry_date) return setError(t('scan.error_expiry'));
     setSaving(true);
     try {
-      await api.createProduct({
-        barcode,
-        name: form.name,
-        expiry_date: form.expiry_date,
-        quantity: form.quantity,
-        category_id: form.category_id || null,
-      });
+      await api.createProduct({ barcode, name: form.name, expiry_date: form.expiry_date, quantity: form.quantity, category_id: form.category_id || null });
       setStats(prev => ({ ...prev, added: prev.added + 1 }));
       resetScan();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setSaving(false); }
   };
 
   const resetScan = () => {
@@ -142,32 +124,27 @@ export default function QuickScan() {
     setIsNew(false);
     setForm({ name: '', expiry_date: '', quantity: 1, category_id: '' });
     setError('');
-    // Resume scanning
     if (readerRef.current) {
       try { readerRef.current.resume(); } catch {}
     }
   };
 
-  const stopAndGo = () => {
-    stopScanner();
-    navigate('/products');
-  };
+  const stopAndGo = () => { stopScanner(); navigate('/products'); };
 
   return (
     <div className="page scan-page">
       <div className="page-header">
-        <h1>📷 빠른 스캔</h1>
-        <button className="btn btn-sm" onClick={stopAndGo}>제품 목록으로</button>
+        <h1>{t('scan.title')}</h1>
+        <button className="btn btn-sm" onClick={stopAndGo}>{t('scan.goToProducts')}</button>
       </div>
 
       {stats.updated > 0 || stats.added > 0 ? (
         <div className="scan-stats">
-          <span className="scan-stat scan-stat-updated">✅ {stats.updated}개 업데이트</span>
-          <span className="scan-stat scan-stat-added">➕ {stats.added}개 추가</span>
+          <span className="scan-stat scan-stat-updated">{t('scan.updated', { count: stats.updated })}</span>
+          <span className="scan-stat scan-stat-added">{t('scan.added', { count: stats.added })}</span>
         </div>
       ) : null}
 
-      {/* Barcode manual input */}
       <div className="form-row" style={{ marginBottom: '1rem' }}>
         <input
           ref={barcodeInputRef}
@@ -175,48 +152,37 @@ export default function QuickScan() {
           value={barcode}
           onChange={e => setBarcode(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="바코드 직접 입력 후 Enter"
+          placeholder={t('scan.barcodePlaceholder')}
           className="form-input"
           style={{ flex: 1, fontSize: '1rem', minHeight: 44 }}
         />
         <button className="btn btn-primary" onClick={handleManualBarcode} style={{ minHeight: 44 }}>
-          조회
+          {t('scan.lookup')}
         </button>
       </div>
 
-      {/* Camera scanner */}
-      <div
-        ref={scannerContainerRef}
-        className="scanner-container"
-        style={{ display: scanning ? 'block' : 'none' }}
-      >
+      <div ref={scannerContainerRef} className="scanner-container" style={{ display: scanning ? 'block' : 'none' }}>
         {!scannerReady && scanning && <div className="loading"><div className="spinner" /></div>}
       </div>
 
-      {!scanning && !product && (
-        <div className="empty-state">
-          📷 카메라를 사용할 수 없습니다.<br />
-          위 입력란에 바코드를 직접 입력하세요.
-        </div>
-      )}
+      {!scanning && !product && <div className="empty-state">{t('scan.cameraError')}</div>}
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      {/* Scan result */}
       {product && !isNew && (
         <div className="scan-result scan-result-existing">
           <div className="scan-result-header">
-            <span className="expiry-badge" style={{ background: '#2563eb' }}>기존 제품</span>
+            <span className="expiry-badge" style={{ background: '#2563eb' }}>{t('scan.existingProduct')}</span>
           </div>
           <h3>{product.name}</h3>
           <div className="scan-result-info">
-            <div><strong>바코드:</strong> {product.barcode}</div>
-            <div><strong>현재 유통기한:</strong> {product.expiry_date}</div>
-            {product.category_name && <div><strong>카테고리:</strong> {product.category_name}</div>}
-            {product.shelf_location && <div><strong>진열장:</strong> {product.shelf_location}</div>}
+            <div><strong>{t('scan.barcode', { code: '' })}</strong> {product.barcode}</div>
+            <div><strong>{t('scan.currentExpiry', { date: product.expiry_date })}</strong></div>
+            {product.category_name && <div><strong>{t('scan.category', { name: product.category_name })}</strong></div>}
+            {product.shelf_location && <div><strong>{t('scan.shelf', { location: product.shelf_location })}</strong></div>}
           </div>
           <div className="scan-result-form">
-            <label><strong>새 유통기한 *</strong></label>
+            <label><strong>{t('scan.newExpiry')}</strong></label>
             <input
               type="date"
               value={form.expiry_date}
@@ -226,11 +192,9 @@ export default function QuickScan() {
             />
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button className="btn btn-primary" onClick={handleUpdateExpiry} disabled={saving} style={{ flex: 1, minHeight: 44 }}>
-                {saving ? '저장 중...' : '유통기한 업데이트'}
+                {saving ? t('scan.saving') : t('scan.updateExpiry')}
               </button>
-              <button className="btn" onClick={resetScan} style={{ minHeight: 44 }}>
-                취소
-              </button>
+              <button className="btn" onClick={resetScan} style={{ minHeight: 44 }}>{t('scan.cancel')}</button>
             </div>
           </div>
         </div>
@@ -239,67 +203,38 @@ export default function QuickScan() {
       {isNew && (
         <div className="scan-result scan-result-new">
           <div className="scan-result-header">
-            <span className="expiry-badge" style={{ background: '#28a745' }}>신규 제품</span>
+            <span className="expiry-badge" style={{ background: '#28a745' }}>{t('scan.newProduct')}</span>
           </div>
-          <p className="scan-result-barcode">바코드: <strong>{barcode}</strong></p>
+          <p className="scan-result-barcode">{t('scan.barcode', { code: barcode })}</p>
 
           <div className="scan-result-form">
             <div className="form-group">
-              <label>제품명 *</label>
-              <input
-                type="text"
-                value={form.name}
-                onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="제품명 입력"
-                className="form-input"
-                style={{ fontSize: '1rem', minHeight: 44 }}
-              />
+              <label>{t('productForm.name')}</label>
+              <input type="text" value={form.name} onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))} placeholder={t('scan.namePlaceholder')} className="form-input" style={{ fontSize: '1rem', minHeight: 44 }} />
             </div>
             <div className="form-row">
               <div className="form-group flex-grow">
-                <label>유통기한 *</label>
-                <input
-                  type="date"
-                  value={form.expiry_date}
-                  onChange={e => setForm(prev => ({ ...prev, expiry_date: e.target.value }))}
-                  className="form-input"
-                  style={{ fontSize: '1rem', minHeight: 44 }}
-                />
+                <label>{t('productForm.expiryDate')}</label>
+                <input type="date" value={form.expiry_date} onChange={e => setForm(prev => ({ ...prev, expiry_date: e.target.value }))} className="form-input" style={{ fontSize: '1rem', minHeight: 44 }} />
               </div>
               <div className="form-group" style={{ minWidth: 80 }}>
-                <label>수량</label>
-                <input
-                  type="number"
-                  value={form.quantity}
-                  onChange={e => setForm(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
-                  min="1"
-                  className="form-input"
-                  style={{ fontSize: '1rem', minHeight: 44 }}
-                />
+                <label>{t('productForm.quantity')}</label>
+                <input type="number" value={form.quantity} onChange={e => setForm(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))} min="1" className="form-input" style={{ fontSize: '1rem', minHeight: 44 }} />
               </div>
             </div>
             <div className="form-group">
-              <label>카테고리</label>
-              <select
-                value={form.category_id}
-                onChange={e => setForm(prev => ({ ...prev, category_id: e.target.value }))}
-                className="form-select"
-                style={{ fontSize: '1rem', minHeight: 44 }}
-              >
-                <option value="">선택 안함</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
+              <label>{t('productForm.category')}</label>
+              <select value={form.category_id} onChange={e => setForm(prev => ({ ...prev, category_id: e.target.value }))} className="form-select" style={{ fontSize: '1rem', minHeight: 44 }}>
+                <option value="">{t('productForm.noCategory')}</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
               <button className="btn btn-primary" onClick={handleAddProduct} disabled={saving} style={{ flex: 1, minHeight: 44 }}>
-                {saving ? '저장 중...' : '제품 추가'}
+                {saving ? t('scan.saving') : t('scan.addProduct')}
               </button>
-              <button className="btn" onClick={resetScan} style={{ minHeight: 44 }}>
-                취소
-              </button>
+              <button className="btn" onClick={resetScan} style={{ minHeight: 44 }}>{t('scan.cancel')}</button>
             </div>
           </div>
         </div>

@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import ProductForm from './ProductForm';
 
 const TABS = [
-  { key: 'expired', label: '유통기한 초과', icon: '🔴' },
-  { key: 'today', label: '오늘', icon: '🔸' },
-  { key: 'tomorrow', label: '내일', icon: '🟡' },
-  { key: 'this_week', label: '이번 주', icon: '🟢' },
-  { key: 'next_week', label: '다음 주', icon: '🔵' },
+  { key: 'expired', tKey: 'expiring.tab_expired', icon: '🔴' },
+  { key: 'today', tKey: 'expiring.tab_today', icon: '🔸' },
+  { key: 'tomorrow', tKey: 'expiring.tab_tomorrow', icon: '🟡' },
+  { key: 'this_week', tKey: 'expiring.tab_thisWeek', icon: '🟢' },
+  { key: 'next_week', tKey: 'expiring.tab_nextWeek', icon: '🔵' },
 ];
 
 const TAB_COLORS = {
@@ -20,6 +21,7 @@ const TAB_COLORS = {
 };
 
 export default function ExpiringSoon() {
+  const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialGroup = searchParams.get('group') || 'today';
   const [activeTab, setActiveTab] = useState(initialGroup);
@@ -66,8 +68,8 @@ export default function ExpiringSoon() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>⏰ 소멸 임박 제품</h1>
-        {data && <p>총 {data.total}개</p>}
+        <h1>{t('expiring.title')}</h1>
+        {data && <p>{t('expiring.total', { count: data.total })}</p>}
       </div>
 
       <div className="tabs">
@@ -78,7 +80,7 @@ export default function ExpiringSoon() {
             onClick={() => handleTabChange(tab.key)}
             style={activeTab === tab.key ? { borderBottomColor: TAB_COLORS[tab.key], color: TAB_COLORS[tab.key] } : {}}
           >
-            {tab.icon} {tab.label}
+            {tab.icon} {t(tab.tKey)}
             {data && activeTab === tab.key && (
               <span className="tab-badge" style={{ background: TAB_COLORS[tab.key] }}>{data.total}</span>
             )}
@@ -88,21 +90,21 @@ export default function ExpiringSoon() {
 
       <div className="card">
         {!data || data.products.length === 0 ? (
-          <div className="empty-state">✅ 해당 기간에 소멸 예정인 제품이 없습니다.</div>
+          <div className="empty-state">{t('expiring.empty')}</div>
         ) : (
           <>
             <div className="table-wrapper">
               <table className="table">
                 <thead>
                   <tr>
-                    <th>상태</th>
-                    <th>제품명</th>
-                    <th>바코드</th>
-                    <th>유통기한</th>
-                    <th>남은일수</th>
-                    <th>진열장</th>
-                    <th>수량</th>
-                    <th>관리</th>
+                    <th>{t('products.status')}</th>
+                    <th>{t('products.name')}</th>
+                    <th>{t('products.barcode')}</th>
+                    <th>{t('products.expiryDate')}</th>
+                    <th>{t('common.days')}</th>
+                    <th>{t('products.shelf')}</th>
+                    <th>{t('products.quantity')}</th>
+                    <th>{t('products.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -112,20 +114,22 @@ export default function ExpiringSoon() {
                       <tr key={p.id}>
                         <td>
                           <span className={`expiry-badge level-${p.level}`}>
-                            {p.level === 'expired' ? '초과' : p.level === 'critical' ? '임박' : p.level === 'warning' ? '주의' : p.level === 'normal' ? '여유' : '신규'}
+                            {t(`badge.${p.level}`)}
                           </span>
                         </td>
                         <td>{p.name}</td>
                         <td className="text-mono">{p.barcode || '-'}</td>
                         <td>{p.expiry_date}</td>
                         <td className={isExpired ? 'text-danger' : ''}>
-                          {isExpired ? `${Math.abs(p.days_left)}일 초과` : `${p.days_left}일`}
+                          {isExpired
+                            ? t('common.daysOverdue', { days: Math.abs(p.days_left) })
+                            : t('common.days', { days: p.days_left })}
                         </td>
                         <td>{p.shelf_location || '-'}</td>
                         <td>{p.quantity} {p.unit}</td>
                         <td>
                           <button className="btn btn-sm" onClick={() => setEditingProduct(p)}>
-                            수정
+                            {t('products.editBtn')}
                           </button>
                         </td>
                       </tr>
@@ -138,7 +142,7 @@ export default function ExpiringSoon() {
             {data.products.length < data.total && (
               <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                 <button className="btn" onClick={loadMore}>
-                  더 보기 ({data.products.length} / {data.total})
+                  {t('expiring.showMore', { shown: data.products.length, total: data.total })}
                 </button>
               </div>
             )}

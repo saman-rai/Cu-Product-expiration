@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Categories() {
+  const { t } = useLanguage();
   const [categories, setCategories] = useState([]);
   const [tree, setTree] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,26 +30,24 @@ export default function Categories() {
 
   useEffect(() => { loadCategories(); }, []);
 
-  const handleAdd = () => {
+  const openAdd = () => {
     setEditCat(null);
     setForm({ name: '', parent_id: '', sort_order: 0 });
     setShowForm(true);
   };
 
-  const handleEdit = (cat) => {
+  const openEdit = (cat) => {
     setEditCat(cat);
     setForm({ name: cat.name, parent_id: cat.parent_id || '', sort_order: cat.sort_order });
     setShowForm(true);
   };
 
   const handleDelete = async (id, name) => {
-    if (!confirm(`"${name}" 카테고리를 삭제하시겠습니까?`)) return;
+    if (!confirm(`"${name}" ${t('categories.deleteConfirm')}`)) return;
     try {
       await api.deleteCategory(id);
       loadCategories();
-    } catch (err) {
-      alert(err.message);
-    }
+    } catch (err) { alert(err.message); }
   };
 
   const handleSubmit = async (e) => {
@@ -63,11 +63,8 @@ export default function Categories() {
       }
       setShowForm(false);
       loadCategories();
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setSaving(false);
-    }
+    } catch (err) { alert(err.message); }
+    finally { setSaving(false); }
   };
 
   const renderTree = (nodes, depth = 0) => (
@@ -77,8 +74,8 @@ export default function Categories() {
           <div className="category-tree-item" style={{ paddingLeft: `${depth * 20 + 8}px` }}>
             <span className="category-name">{node.name}</span>
             <div className="category-actions">
-              <button className="btn btn-sm" onClick={() => handleEdit(node)}>수정</button>
-              <button className="btn btn-sm btn-danger" onClick={() => handleDelete(node.id, node.name)}>삭제</button>
+              <button className="btn btn-sm" onClick={() => openEdit(node)}>{t('common.edit')}</button>
+              <button className="btn btn-sm btn-danger" onClick={() => handleDelete(node.id, node.name)}>{t('common.delete')}</button>
             </div>
           </div>
           {node.children?.length > 0 && renderTree(node.children, depth + 1)}
@@ -92,13 +89,13 @@ export default function Categories() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>카테고리 관리</h1>
-        <button className="btn btn-primary" onClick={handleAdd}>+ 새 카테고리</button>
+        <h1>{t('categories.title')}</h1>
+        <button className="btn btn-primary" onClick={openAdd}>+ {t('categories.add')}</button>
       </div>
 
       <div className="card">
         {tree.length === 0 ? (
-          <div className="empty-state">카테고리가 없습니다. 추가해주세요.</div>
+          <div className="empty-state">{t('common.noData')}</div>
         ) : (
           renderTree(tree)
         )}
@@ -108,31 +105,31 @@ export default function Categories() {
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editCat ? '카테고리 수정' : '새 카테고리'}</h2>
+              <h2>{editCat ? t('categories.edit') : t('categories.add')}</h2>
               <button className="btn-close" onClick={() => setShowForm(false)}>✕</button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>카테고리명 *</label>
+                <label>{t('categories.name')} *</label>
                 <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required className="form-input" autoFocus />
               </div>
               <div className="form-group">
-                <label>상위 카테고리</label>
+                <label>{t('categories.parent')}</label>
                 <select value={form.parent_id} onChange={e => setForm(p => ({ ...p, parent_id: e.target.value }))} className="form-select">
-                  <option value="">최상위 (없음)</option>
+                  <option value="">{t('categories.noParent')}</option>
                   {categories.filter(c => !c.parent_id && c.id !== editCat?.id).map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
               </div>
               <div className="form-group">
-                <label>정렬 순서</label>
+                <label>{t('categories.sortOrder')}</label>
                 <input type="number" value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: parseInt(e.target.value) || 0 }))} className="form-input" style={{ width: 80 }} />
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn" onClick={() => setShowForm(false)}>취소</button>
+                <button type="button" className="btn" onClick={() => setShowForm(false)}>{t('common.cancel')}</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? '저장 중...' : editCat ? '수정 완료' : '추가'}
+                  {saving ? t('common.save') : editCat ? t('common.save') : t('categories.add')}
                 </button>
               </div>
             </form>

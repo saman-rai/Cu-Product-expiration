@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Suppliers() {
+  const { t } = useLanguage();
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -23,26 +25,24 @@ export default function Suppliers() {
 
   useEffect(() => { load(); }, []);
 
-  const handleAdd = () => {
+  const openAdd = () => {
     setEditSup(null);
     setForm({ name: '', contact_person: '', phone: '', email: '', notes: '' });
     setShowForm(true);
   };
 
-  const handleEdit = (s) => {
+  const openEdit = (s) => {
     setEditSup(s);
     setForm({ name: s.name, contact_person: s.contact_person || '', phone: s.phone || '', email: s.email || '', notes: s.notes || '' });
     setShowForm(true);
   };
 
   const handleDelete = async (id, name) => {
-    if (!confirm(`"${name}" 공급업체를 삭제하시겠습니까?`)) return;
+    if (!confirm(`"${name}" ${t('suppliers.deleteConfirm')}`)) return;
     try {
       await api.deleteSupplier(id);
       load();
-    } catch (err) {
-      alert(err.message);
-    }
+    } catch (err) { alert(err.message); }
   };
 
   const handleSubmit = async (e) => {
@@ -57,11 +57,8 @@ export default function Suppliers() {
       }
       setShowForm(false);
       load();
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setSaving(false);
-    }
+    } catch (err) { alert(err.message); }
+    finally { setSaving(false); }
   };
 
   if (loading) return <div className="loading"><div className="spinner" /></div>;
@@ -69,23 +66,23 @@ export default function Suppliers() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>공급업체 관리</h1>
-        <button className="btn btn-primary" onClick={handleAdd}>+ 새 공급업체</button>
+        <h1>{t('suppliers.title')}</h1>
+        <button className="btn btn-primary" onClick={openAdd}>+ {t('suppliers.add')}</button>
       </div>
 
       {suppliers.length === 0 ? (
-        <div className="empty-state">등록된 공급업체가 없습니다.</div>
+        <div className="empty-state">{t('suppliers.noSuppliers')}</div>
       ) : (
         <div className="table-wrapper">
           <table className="table">
             <thead>
               <tr>
-                <th>업체명</th>
-                <th>담당자</th>
-                <th>전화번호</th>
-                <th>이메일</th>
-                <th>비고</th>
-                <th>관리</th>
+                <th>{t('suppliers.name')}</th>
+                <th>{t('suppliers.contactPerson')}</th>
+                <th>{t('suppliers.phone')}</th>
+                <th>{t('suppliers.email')}</th>
+                <th>{t('suppliers.notes')}</th>
+                <th>{t('products.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -97,8 +94,8 @@ export default function Suppliers() {
                   <td>{s.email || '-'}</td>
                   <td>{s.notes || '-'}</td>
                   <td>
-                    <button className="btn btn-sm" onClick={() => handleEdit(s)}>수정</button>
-                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(s.id, s.name)}>삭제</button>
+                    <button className="btn btn-sm" onClick={() => openEdit(s)}>{t('common.edit')}</button>
+                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(s.id, s.name)}>{t('common.delete')}</button>
                   </td>
                 </tr>
               ))}
@@ -111,36 +108,36 @@ export default function Suppliers() {
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editSup ? '공급업체 수정' : '새 공급업체'}</h2>
+              <h2>{editSup ? t('suppliers.edit') : t('suppliers.add')}</h2>
               <button className="btn-close" onClick={() => setShowForm(false)}>✕</button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>업체명 *</label>
+                <label>{t('suppliers.name')} *</label>
                 <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required className="form-input" />
               </div>
               <div className="form-row">
                 <div className="form-group flex-grow">
-                  <label>담당자</label>
+                  <label>{t('suppliers.contactPerson')}</label>
                   <input type="text" value={form.contact_person} onChange={e => setForm(p => ({ ...p, contact_person: e.target.value }))} className="form-input" />
                 </div>
                 <div className="form-group flex-grow">
-                  <label>전화번호</label>
+                  <label>{t('suppliers.phone')}</label>
                   <input type="text" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} className="form-input" />
                 </div>
               </div>
               <div className="form-group">
-                <label>이메일</label>
+                <label>{t('suppliers.email')}</label>
                 <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} className="form-input" />
               </div>
               <div className="form-group">
-                <label>비고</label>
+                <label>{t('suppliers.notes')}</label>
                 <textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={2} className="form-input" />
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn" onClick={() => setShowForm(false)}>취소</button>
+                <button type="button" className="btn" onClick={() => setShowForm(false)}>{t('common.cancel')}</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? '저장 중...' : editSup ? '수정 완료' : '추가'}
+                  {saving ? t('common.save') : editSup ? t('common.save') : t('suppliers.add')}
                 </button>
               </div>
             </form>

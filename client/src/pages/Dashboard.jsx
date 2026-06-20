@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import ExpiryAlertModal from '../components/ExpiryAlertModal';
 
 export default function Dashboard() {
+  const { t } = useLanguage();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [alerts, setAlerts] = useState(null);
@@ -14,7 +16,6 @@ export default function Dashboard() {
       .catch(() => {})
       .finally(() => setLoading(false));
 
-    // Check expiry alerts for login popup
     const dismissed = localStorage.getItem('expiryAlertDismissed');
     const today = new Date().toISOString().split('T')[0];
 
@@ -33,22 +34,22 @@ export default function Dashboard() {
 
   if (loading) return <div className="loading"><div className="spinner" /></div>;
 
-  if (!summary) return <div className="empty-state">데이터를 불러올 수 없습니다.</div>;
+  if (!summary) return <div className="empty-state">{t('dashboard.loadError')}</div>;
 
   const { summary: counts, nearestExpiry, total } = summary;
 
   const cards = [
-    { label: '유통기한 초과', value: counts.expired, color: '#dc3545', icon: '🔴' },
-    { label: '임박 (3일 이내)', value: counts.critical, color: '#fd7e14', icon: '🟠' },
-    { label: '주의 (2주 이내)', value: counts.warning, color: '#ffc107', icon: '🟡' },
-    { label: '여유 있음', value: counts.normal + counts.fresh, color: '#28a745', icon: '🟢' },
+    { label: t('dashboard.expired'), value: counts.expired, color: '#dc3545', icon: '🔴' },
+    { label: t('dashboard.critical'), value: counts.critical, color: '#fd7e14', icon: '🟠' },
+    { label: t('dashboard.warning'), value: counts.warning, color: '#ffc107', icon: '🟡' },
+    { label: t('dashboard.ok'), value: counts.normal + counts.fresh, color: '#28a745', icon: '🟢' },
   ];
 
   return (
     <div className="page">
       <div className="page-header">
-        <h1>대시보드</h1>
-        <p>총 {total}개 제품</p>
+        <h1>{t('dashboard.title')}</h1>
+        <p>{t('dashboard.totalProducts', { count: total })}</p>
       </div>
 
       <div className="summary-cards">
@@ -64,41 +65,46 @@ export default function Dashboard() {
       </div>
 
       <div className="card">
-        <h2 className="card-title">⚠️ 유통기한 임박 제품</h2>
+        <h2 className="card-title">{t('dashboard.nearestExpiry')}</h2>
         {nearestExpiry.length === 0 ? (
-          <div className="empty-state">✅ 임박 제품이 없습니다.</div>
+          <div className="empty-state">{t('dashboard.noExpiring')}</div>
         ) : (
           <div className="table-wrapper">
             <table className="table">
               <thead>
                 <tr>
-                  <th>상태</th>
-                  <th>제품명</th>
-                  <th>바코드</th>
-                  <th>유통기한</th>
-                  <th>남은일수</th>
-                  <th>진열장</th>
-                  <th>수량</th>
+                  <th>{t('products.status')}</th>
+                  <th>{t('products.name')}</th>
+                  <th>{t('products.barcode')}</th>
+                  <th>{t('products.expiryDate')}</th>
+                  <th>{t('common.days')}</th>
+                  <th>{t('products.shelf')}</th>
+                  <th>{t('products.quantity')}</th>
                 </tr>
               </thead>
               <tbody>
-                {nearestExpiry.map(p => (
-                  <tr key={p.id}>
-                    <td>
-                      <span className={`expiry-badge level-${p.level}`}>
-                        {p.level === 'expired' ? '초과' : p.level === 'critical' ? '임박' : '주의'}
-                      </span>
-                    </td>
-                    <td>{p.name}</td>
-                    <td className="text-mono">{p.barcode}</td>
-                    <td>{p.expiry_date}</td>
-                    <td className={p.days_left < 0 ? 'text-danger' : ''}>
-                      {p.days_left < 0 ? `${Math.abs(p.days_left)}일 초과` : `${p.days_left}일`}
-                    </td>
-                    <td>{p.shelf_location || '-'}</td>
-                    <td>{p.quantity} {p.unit}</td>
-                  </tr>
-                ))}
+                {nearestExpiry.map(p => {
+                  const isExpired = p.days_left < 0;
+                  return (
+                    <tr key={p.id}>
+                      <td>
+                        <span className={`expiry-badge level-${p.level}`}>
+                          {t(`badge.${p.level}`)}
+                        </span>
+                      </td>
+                      <td>{p.name}</td>
+                      <td className="text-mono">{p.barcode}</td>
+                      <td>{p.expiry_date}</td>
+                      <td className={isExpired ? 'text-danger' : ''}>
+                        {isExpired
+                          ? t('common.daysOverdue', { days: Math.abs(p.days_left) })
+                          : t('common.days', { days: p.days_left })}
+                      </td>
+                      <td>{p.shelf_location || t('common.unknown')}</td>
+                      <td>{p.quantity} {p.unit}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

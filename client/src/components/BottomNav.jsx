@@ -1,14 +1,17 @@
 import { NavLink } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 const navItems = [
-  { to: '/dashboard', label: '홈', icon: '🏠' },
-  { to: '/scan', label: '스캔', icon: '📷' },
-  { to: '/products', label: '제품', icon: '📦' },
-  { to: '/expiring-soon', label: '소멸', icon: '⏰' },
-  { to: '/excel', label: '더보기', icon: '📄' },
+  { to: '/dashboard', key: 'nav.home', icon: '🏠' },
+  { to: '/scan', key: 'nav.scan', icon: '📷' },
+  { to: '/products', key: 'nav.products', icon: '📦' },
+  { to: '/expiring-soon', key: 'nav.expiring', icon: '⏰' },
+  { to: '/excel', key: 'nav.more', icon: '📄' },
 ];
 
 export default function BottomNav({ expiryCount }) {
+  const { t } = useLanguage();
+
   return (
     <nav className="bottom-nav">
       {navItems.map(item => (
@@ -23,7 +26,7 @@ export default function BottomNav({ expiryCount }) {
               <span className="nav-badge">{expiryCount > 99 ? '99+' : expiryCount}</span>
             )}
           </span>
-          <span>{item.label}</span>
+          <span>{t(item.key)}</span>
         </NavLink>
       ))}
     </nav>

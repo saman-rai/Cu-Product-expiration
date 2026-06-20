@@ -1,8 +1,27 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import ProductForm from './ProductForm';
 
+const STATUS_OPTIONS = [
+  { value: '', key: 'products.allStatus' },
+  { value: 'expired', key: 'badge.expired' },
+  { value: 'critical', key: 'badge.critical' },
+  { value: 'warning', key: 'badge.warning' },
+  { value: 'normal', key: 'badge.normal' },
+  { value: 'fresh', key: 'badge.fresh' },
+];
+
+const statusColors = {
+  expired: '#dc3545',
+  critical: '#fd7e14',
+  warning: '#ffc107',
+  normal: '#28a745',
+  fresh: '#17a2b8',
+};
+
 export default function Products() {
+  const { t } = useLanguage();
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -25,39 +44,24 @@ export default function Products() {
     }
   };
 
-  useEffect(() => {
-    loadProducts();
-  }, [statusFilter]);
+  useEffect(() => { loadProducts(); }, [statusFilter]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    loadProducts();
-  };
+  const handleSearch = (e) => { e.preventDefault(); loadProducts(); };
 
   const handleDelete = async (id, name) => {
-    if (!confirm(`"${name}" 제품을 삭제하시겠습니까?`)) return;
+    if (!confirm(`"${name}" ${t('products.deleteConfirm')}`)) return;
     try {
       await api.deleteProduct(id);
       loadProducts();
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
-  const statusColors = {
-    expired: '#dc3545',
-    critical: '#fd7e14',
-    warning: '#ffc107',
-    normal: '#28a745',
-    fresh: '#17a2b8',
+    } catch (err) { alert(err.message); }
   };
 
   return (
     <div className="page">
       <div className="page-header">
-        <h1>제품 관리</h1>
+        <h1>{t('products.title')}</h1>
         <button className="btn btn-primary" onClick={() => { setEditProduct(null); setShowForm(true); }}>
-          + 제품 추가
+          + {t('products.add')}
         </button>
       </div>
 
@@ -65,47 +69,38 @@ export default function Products() {
         <form onSubmit={handleSearch} className="search-form">
           <input
             type="text"
-            placeholder="제품명 또는 바코드 검색..."
+            placeholder={t('products.search')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="search-input"
           />
-          <button type="submit" className="btn btn-primary">검색</button>
+          <button type="submit" className="btn btn-primary">{t('products.searchButton')}</button>
         </form>
-        <select
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-          className="form-select"
-        >
-          <option value="">전체 상태</option>
-          <option value="expired">유통기한 초과</option>
-          <option value="critical">임박 (3일)</option>
-          <option value="warning">주의 (2주)</option>
-          <option value="normal">여유 있음</option>
-          <option value="fresh">신규</option>
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="form-select">
+          {STATUS_OPTIONS.map(o => (
+            <option key={o.value} value={o.value}>{t(o.key)}</option>
+          ))}
         </select>
       </div>
 
       {loading ? (
         <div className="loading"><div className="spinner" /></div>
       ) : products.length === 0 ? (
-        <div className="empty-state">
-          {search || statusFilter ? '검색 결과가 없습니다.' : '등록된 제품이 없습니다. "+ 제품 추가" 버튼으로 추가하세요.'}
-        </div>
+        <div className="empty-state">{t('products.noProducts')}</div>
       ) : (
         <div className="table-wrapper">
           <table className="table">
             <thead>
               <tr>
-                <th>바코드</th>
-                <th>제품명</th>
-                <th>카테고리</th>
-                <th>공급업체</th>
-                <th>진열장</th>
-                <th>수량</th>
-                <th>유통기한</th>
-                <th>상태</th>
-                <th>관리</th>
+                <th>{t('products.barcode')}</th>
+                <th>{t('products.name')}</th>
+                <th>{t('products.category')}</th>
+                <th>{t('products.supplier')}</th>
+                <th>{t('products.shelf')}</th>
+                <th>{t('products.quantity')}</th>
+                <th>{t('products.expiryDate')}</th>
+                <th>{t('products.status')}</th>
+                <th>{t('products.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -120,26 +115,17 @@ export default function Products() {
                   <td>{p.expiry_date}</td>
                   <td>
                     {p.expiry_status && (
-                      <span
-                        className="expiry-badge"
-                        style={{ backgroundColor: statusColors[p.expiry_status.level] || '#6c757d' }}
-                      >
-                        {p.expiry_status.label}
+                      <span className="expiry-badge" style={{ backgroundColor: statusColors[p.expiry_status.level] || '#6c757d' }}>
+                        {t(`badge.${p.expiry_status.level}`, {}, p.expiry_status.label)}
                       </span>
                     )}
                   </td>
                   <td>
-                    <button
-                      className="btn btn-sm"
-                      onClick={() => { setEditProduct(p); setShowForm(true); }}
-                    >
-                      수정
+                    <button className="btn btn-sm" onClick={() => { setEditProduct(p); setShowForm(true); }}>
+                      {t('products.editBtn')}
                     </button>
-                    <button
-                      className="btn btn-sm btn-danger"
-                      onClick={() => handleDelete(p.id, p.name)}
-                    >
-                      삭제
+                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id, p.name)}>
+                      {t('products.deleteBtn')}
                     </button>
                   </td>
                 </tr>
