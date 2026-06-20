@@ -16,8 +16,11 @@ async function start() {
   await initDatabase();
   console.log('🗄️  Database initialized');
 
+  // --- Health check (for deployment platforms) ---
+  app.get('/api/health', (req, res) => res.json({ ok: true }));
+
   // --- Middleware ---
-  app.use(cors({ origin: isDev ? 'http://localhost:5173' : false, credentials: true }));
+  app.use(cors({ origin: isDev ? true : false, credentials: true }));
   app.use(express.json());
 
   // Session setup with file store (zero native deps)
